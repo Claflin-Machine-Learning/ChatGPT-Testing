@@ -1,5 +1,3 @@
-# "OpenAI's GPT-3/ChatGPT: Suggests, but not Corrects"
-# Built-in Functions: https://www.programiz.com/python-programming/methods
 import os
 import time
 from datetime import datetime
