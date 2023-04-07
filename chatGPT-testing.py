@@ -4,9 +4,10 @@ import os
 import time
 from datetime import datetime
 import openai
+import json
 
 os.chdir("./")
-sleep_interval = 10
+sleep_interval_sec = 2
 open_ai_key = "OPENAI_API_KEY"
 
 # Initialize the API key for OpenAI
@@ -15,64 +16,82 @@ if open_ai_key in os.environ:
 else: 
     raise ValueError(f"{open_ai_key} is not set in the environment.")
 
+language_map = {
+        "python":".py",
+        "java": ".java",
+        "c++":".cpp",
+        "c": ".c",
+        "kotlin":".kt",
+        "css": ".css",
+        "javascript":".js",
+        "go": ".go"
+}
+
+def get_file_extension(language):
+    return language_map.get(language.lower(), "Unknown")
 
 def get_chatgpt_response(question):
 
-    completions = openai.Completion.create(
-        engine = "code-cushman-001",
-        prompt = question,
-        max_tokens = 1024,
-        n = 1,
-        stop = None,
-        temperature = 0.2
+    return openai.ChatCompletion.create(
+        model = "gpt-3.5-turbo",
+        messages = [{"role":"user", "content":question}]
     )
 
-    return completions.choices[0].text
+def process_chat_completions(completion):
+    input_dict = completion.to_dict()
+    output_dict = {}
 
+    output_dict["id"] = completion.id
+    output_dict["output"] = completion.choices[0].message.content
 
-def read_py_files_in_folder():
+    return output_dict
+
+def read_language_files_in_folder():
 
     current_folder = os.getcwd()
-    
-    questions_folder = os.path.join(current_folder,"questions")
 
-    responses_folder = os.path.join(current_folder,"responses")
+    source_folder = os.path.join(current_folder,"questions")
 
-    questions_folder_exists = os.path.exists(questions_folder)
+    languages = [f for f in os.listdir(source_folder) if os.path.isdir(os.path.join(source_folder, f))]
 
-    response_folder_exists = os.path.exists(responses_folder)
+    for language in languages:
 
-    if not questions_folder_exists:
-        os.makedirs(questions_folder)
+        questions_folder = os.path.join(source_folder,language)
 
-    if not response_folder_exists:
-        os.makedirs(responses_folder)
+        responses_folder = os.path.join(current_folder,"responses",language)
 
-    python_files = [f for f in os.listdir(questions_folder) if f.endswith('.py')]
-    
-    response_file = f"response-{datetime.now().isoformat()}.txt"
-    
-    with open(responses_folder + "/" + response_file,"a") as append_file:
+        response_folder_exists = os.path.exists(responses_folder)
+
+        if not response_folder_exists:
+            os.makedirs(responses_folder)
+
+        language_files = [f for f in os.listdir(questions_folder) if f.endswith(get_file_extension(language))]
         
-        for python_file in python_files:
+        response_file = f'response-{datetime.now().isoformat()}.txt'
+    
+        with open(responses_folder + "/" + response_file,"a") as append_file:
             
-            print(f"Processing... {python_file}")
+            for language_file in language_files:
+                
+                print(f'Processing... {language_file}')
+                        
+                with open(questions_folder + "/" + language_file, "r") as file:
                     
-            with open(questions_folder + "/" + python_file, "r") as file:
-                
-                code = file.read()
+                    code = file.read()
 
-                question = f"Fix following Python code:\n\n{code}"
-                
-                response = get_chatgpt_response(question)
-                
-                content = f"\nQuestion:\n\n{question}\n\nResponse:\n\n{response}\n======="
+                    question = f'Fix following {language} code:\n```\n{code}\n```'
+                    
+                    chat_completions = get_chatgpt_response(question)
 
-            append_file.write(content)
-            print(f"Done processing... {python_file}")
-            time.sleep(sleep_interval)
+                    output_dict = process_chat_completions(chat_completions)
+                    content = f'\nchat_completion_id:\t{output_dict["id"]}\n\nquestion:\n\n{question}\n\nresponse:\n\n{output_dict["output"]}\n=======\n'
+
+                append_file.write(content)
+                append_file.flush()
+                print(f"Done processing... {language_file}")
+                time.sleep(sleep_interval_sec)
 
     print("Finished")
 
 if __name__ == '__main__':
-    read_py_files_in_folder()
+    read_language_files_in_folder()

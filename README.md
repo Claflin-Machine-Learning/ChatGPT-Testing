@@ -2,8 +2,7 @@
 
 Introduction
 ===
-Analyze ChatGPT's codex to determine it's viability to identify basic issues
-with provided Python code using OpenAI's code model, current `code-cushman-001`
+Analyze ChatGPT's codex to determine it's viability to identify code issues, fix and suggest fixes.
 
 
 Tech stack
@@ -28,13 +27,14 @@ Steps
 ===
 1. Change to `ChatGTP-Testing` folder for executing logic
 
-2. Run using `python chatGTP_testomg.py`
+2. Run using `python3 chatGTP_test.py`
 
-3. If all the required prerequisites are set correctly then python program will start logging the question and respective responses inside `responses` folder inside file named `response-{ISO8601 dateformat}.py`
+3. If all the required prerequisites are set correctly then python program will start logging the question and respective responses inside `responses` folder for particular language in file named `response-{ISO8601 dateformat}.py`
 
 
 
 Resources
 ---
 - [OpenAI's API documentation](https://platform.openai.com/docs/api-reference/introduction)
+
 - [OpenAI's Code models](https://platform.openai.com/docs/models/codex)
